@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
 type CliCommand struct {
 	name        string
 	description string
-	callback    func(*CliConfig, *cacheType) error
+	callback    func(*CliConfig, *cacheType, []string) error
 }
 
 func getCliCommands() map[string]CliCommand {
@@ -35,10 +36,15 @@ func getCliCommands() map[string]CliCommand {
 			description: "Display the previous list of locations",
 			callback: commandMapBack,
 		},
+		"explore": {
+			name: "explore",
+			description: "Explores a given area and prints list of found Pokemon",
+			callback: commandExplore,
+		},
 	}
 }
 
-func commandHelp(config *CliConfig, cache *cacheType) error {
+func commandHelp(config *CliConfig, cache *cacheType, commandParams []string) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Poke CLI!")
 	fmt.Println("Usage:")
@@ -53,7 +59,7 @@ func commandHelp(config *CliConfig, cache *cacheType) error {
 	return nil
 }
 
-func commandExit(config *CliConfig, cache *cacheType) error {
+func commandExit(config *CliConfig, cache *cacheType, commandParams []string) error {
 	os.Exit(0)
 	return nil
 }
@@ -61,7 +67,7 @@ func commandExit(config *CliConfig, cache *cacheType) error {
 func genericMapCommand(url string, config *CliConfig, cache *cacheType) error {
 	locations, err := fetchLocations(url, cache)
 	if err != nil {
-		fmt.Println(error.Error(err))
+		fmt.Println(err)
 		return err
 	}
 
@@ -74,12 +80,36 @@ func genericMapCommand(url string, config *CliConfig, cache *cacheType) error {
 	return nil
 } 
 
-func commandMap(config *CliConfig, cache *cacheType) error {
+func commandMap(config *CliConfig, cache *cacheType, commandParams []string) error {
 	return genericMapCommand(*config.nextLocationURL, config, cache)
 }
 
-func commandMapBack(config *CliConfig, cache *cacheType) error {
+func commandMapBack(config *CliConfig, cache *cacheType, commandParams []string) error {
 	return genericMapCommand(*config.prevLocationURL, config, cache)
+}
+
+func commandExplore(config *CliConfig, cache *cacheType, commandParams []string) error {
+	areaName := commandParams[0]
+	fmt.Printf("Exploring %s\n", areaName)
+
+	location, err := fetchLocationDetail(areaName, cache)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	encounters := location.PokemonEncounters
+	if len(encounters) == 0 {
+		fmt.Printf("Found no Pokemon in area: %s\n", areaName)
+		return nil
+	}
+
+	fmt.Printf("Found Pokemon:\n")
+	for _, encounter := range encounters {
+		fmt.Printf(" - %s\n", encounter.Pokemon.Name)
+	}
+
+	return nil
 }
 
 type CliConfig struct {
@@ -90,7 +120,7 @@ type CliConfig struct {
 func Cli () {
 	cliCommands := getCliCommands()
 
-	var initLocationURL string = "https://pokeapi.co/api/v2/location?offset=0&limit=20"
+	var initLocationURL string = "https://pokeapi.co/api/v2/location-area?offset=0&limit=20"
 	cliConfig := CliConfig{
 		prevLocationURL: &initLocationURL,
 		nextLocationURL: &initLocationURL,
@@ -104,7 +134,11 @@ func Cli () {
 	for {
 		fmt.Print("Poke CLI> ")
 		scanner.Scan()
-		enteredCommand := scanner.Text()
+		enteredText := scanner.Text()
+		enteredFields := strings.Fields(enteredText)
+		
+		enteredCommand := enteredFields[0]
+		enteredParameters := enteredFields[1:]
 
 		command, ok := cliCommands[enteredCommand]
 		if !ok {
@@ -112,6 +146,6 @@ func Cli () {
 			continue
 		}
 
-		command.callback(&cliConfig, &cache)
+		command.callback(&cliConfig, &cache, enteredParameters)
 	}
 }
