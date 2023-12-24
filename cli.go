@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 )
 
 type CliCommand struct {
 	name        string
 	description string
-	callback    func(*CliConfig) error
+	callback    func(*CliConfig, *cacheType) error
 }
 
 func getCliCommands() map[string]CliCommand {
@@ -37,7 +38,7 @@ func getCliCommands() map[string]CliCommand {
 	}
 }
 
-func commandHelp(config *CliConfig) error {
+func commandHelp(config *CliConfig, cache *cacheType) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Poke CLI!")
 	fmt.Println("Usage:")
@@ -52,13 +53,13 @@ func commandHelp(config *CliConfig) error {
 	return nil
 }
 
-func commandExit(config *CliConfig) error {
+func commandExit(config *CliConfig, cache *cacheType) error {
 	os.Exit(0)
 	return nil
 }
 
-func genericMapCommand(url string, config *CliConfig) error {
-	locations, err := fetchLocations(url)
+func genericMapCommand(url string, config *CliConfig, cache *cacheType) error {
+	locations, err := fetchLocations(url, cache)
 	if err != nil {
 		fmt.Println(error.Error(err))
 		return err
@@ -73,12 +74,12 @@ func genericMapCommand(url string, config *CliConfig) error {
 	return nil
 } 
 
-func commandMap(config *CliConfig) error {
-	return genericMapCommand(*config.nextLocationURL, config)
+func commandMap(config *CliConfig, cache *cacheType) error {
+	return genericMapCommand(*config.nextLocationURL, config, cache)
 }
 
-func commandMapBack(config *CliConfig) error {
-	return genericMapCommand(*config.prevLocationURL, config)
+func commandMapBack(config *CliConfig, cache *cacheType) error {
+	return genericMapCommand(*config.prevLocationURL, config, cache)
 }
 
 type CliConfig struct {
@@ -89,11 +90,13 @@ type CliConfig struct {
 func Cli () {
 	cliCommands := getCliCommands()
 
-	var initLocationURL string = "https://pokeapi.co/api/v2/location"
+	var initLocationURL string = "https://pokeapi.co/api/v2/location?offset=0&limit=20"
 	cliConfig := CliConfig{
 		prevLocationURL: &initLocationURL,
 		nextLocationURL: &initLocationURL,
 	}
+
+	cache := newCache(time.Duration(5) * time.Second)
 
 	reader := bufio.NewReader(os.Stdin)
 	scanner := bufio.NewScanner(reader)
@@ -109,6 +112,6 @@ func Cli () {
 			continue
 		}
 
-		command.callback(&cliConfig)
+		command.callback(&cliConfig, &cache)
 	}
 }

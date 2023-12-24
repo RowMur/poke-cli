@@ -8,7 +8,12 @@ import (
 	"net/http"
 )
 
-func fetch(url string) ([]byte, error) {
+func fetch(url string, cache *cacheType) ([]byte, error) {
+	cachedEntry, ok := cache.get(url)
+	if ok {
+		return cachedEntry, nil
+	}
+
 	res, err := http.Get(url)
 	if err != nil {
 		errorMessage := fmt.Sprintf("error fetching url: '%s'", url)
@@ -23,6 +28,7 @@ func fetch(url string) ([]byte, error) {
 		return []byte{}, errors.New(errorMessage)
 	}
 
+	cache.add(url, body)
 	return body, nil
 }
 
@@ -36,8 +42,8 @@ type locationResponse struct {
 	} `json:"results"`
 }
 
-func fetchLocations(url string) (locationResponse, error) {
-	body, err := fetch(url)
+func fetchLocations(url string, cache *cacheType) (locationResponse, error) {
+	body, err := fetch(url, cache)
 	if err != nil {
 		return locationResponse{}, err
 	}
