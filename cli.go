@@ -3,15 +3,18 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
 type CliCommand struct {
 	name        string
 	description string
-	callback    func(*CliConfig, *cacheType, []string) error
+	callback    func(*CliState, *cacheType, []string) error
 }
 
 func getCliCommands() map[string]CliCommand {
@@ -41,38 +44,50 @@ func getCliCommands() map[string]CliCommand {
 			description: "Explores a given area and prints list of found Pokemon",
 			callback: commandExplore,
 		},
+		"catch": {
+			name: "catch",
+			description: "Attempts to catch a pokemon",
+			callback: commandCatch,
+		},
 	}
 }
 
-func commandHelp(config *CliConfig, cache *cacheType, commandParams []string) error {
+func commandHelp(state *CliState, cache *cacheType, commandParams []string) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Poke CLI!")
 	fmt.Println("Usage:")
 	fmt.Println()
 	
 	cliCommands := getCliCommands()
-	for _, value := range cliCommands {
-		fmt.Printf("%s: %s\n", value.name, value.description)
-	}
-	fmt.Println()
 
+	keys := make([]string, 0)
+	for key := range cliCommands {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+	for _, key := range keys {
+		fmt.Printf("%s: %s\n", cliCommands[key].name, cliCommands[key].description)
+	}
+
+	fmt.Println()
 	return nil
 }
 
-func commandExit(config *CliConfig, cache *cacheType, commandParams []string) error {
+func commandExit(state  *CliState, cache *cacheType, commandParams []string) error {
 	os.Exit(0)
 	return nil
 }
 
-func genericMapCommand(url string, config *CliConfig, cache *cacheType) error {
+func genericMapCommand(url string, state *CliState, cache *cacheType) error {
 	locations, err := fetchLocations(url, cache)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
 
-	config.prevLocationURL = &locations.Previous
-	config.nextLocationURL = &locations.Next
+	state.prevLocationURL = &locations.Previous
+	state.nextLocationURL = &locations.Next
 
 	for _, result := range locations.Results {
 		fmt.Println(result.Name)
@@ -80,21 +95,26 @@ func genericMapCommand(url string, config *CliConfig, cache *cacheType) error {
 	return nil
 } 
 
-func commandMap(config *CliConfig, cache *cacheType, commandParams []string) error {
-	return genericMapCommand(*config.nextLocationURL, config, cache)
+func commandMap(state *CliState, cache *cacheType, commandParams []string) error {
+	return genericMapCommand(*state.nextLocationURL, state, cache)
 }
 
-func commandMapBack(config *CliConfig, cache *cacheType, commandParams []string) error {
-	return genericMapCommand(*config.prevLocationURL, config, cache)
+func commandMapBack(state *CliState, cache *cacheType, commandParams []string) error {
+	return genericMapCommand(*state.prevLocationURL, state, cache)
 }
 
-func commandExplore(config *CliConfig, cache *cacheType, commandParams []string) error {
+func commandExplore(state *CliState, cache *cacheType, commandParams []string) error {
 	areaName := commandParams[0]
 	fmt.Printf("Exploring %s\n", areaName)
 
 	location, err := fetchLocationDetail(areaName, cache)
 	if err != nil {
-		fmt.Println(err)
+		if err.Error() != "404" {
+			fmt.Println(err)
+			return err
+		}
+
+		fmt.Println("...I think you got lost. Check your spelling.")
 		return err
 	}
 
@@ -112,24 +132,81 @@ func commandExplore(config *CliConfig, cache *cacheType, commandParams []string)
 	return nil
 }
 
-type CliConfig struct {
+func commandCatch(state *CliState, cache *cacheType, commandParams []string) error {
+	pokemonToCatchName := commandParams[0]
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonToCatchName)
+
+	p, err := fetchPokemon(pokemonToCatchName, cache)
+	if err != nil {
+		if err.Error() != "404" {
+			fmt.Println(err)
+			return err
+		}
+
+		fmt.Println("...pokeball missed. Check your spelling.")
+		return err
+	}
+
+	wasCaught := rand.Intn(256) >= p.BaseExperience
+	if !wasCaught {
+		fmt.Printf("%s escaped!\n", pokemonToCatchName)
+		return nil
+	}
+
+	prevPokedex := *state.pokedex
+	_, ok := prevPokedex[p.Name]
+	if !ok {
+		prevPokedex[p.Name] = PokedexEntry{
+			pokemon: p,
+			timesCaught: 1,
+		}
+	} else {
+		prevTimesCaught := prevPokedex[p.Name].timesCaught
+		prevPokedex[p.Name] = PokedexEntry{
+			pokemon: p,
+			timesCaught: prevTimesCaught + 1,
+		}
+	}
+
+	state.mux.Lock()
+	defer state.mux.Unlock()
+	state.pokedex = &prevPokedex
+
+	pokedex := *state.pokedex
+	entry := pokedex[p.Name]
+	fmt.Printf("%s was caught! Caught a total of %v times\n", entry.pokemon.Name, entry.timesCaught)
+	return nil
+}
+
+type PokedexEntry struct {
+	pokemon Pokemon
+	timesCaught int
+}
+
+type CliState struct {
 	prevLocationURL *string
 	nextLocationURL *string
+	pokedex *map[string]PokedexEntry
+	mux *sync.Mutex
 }
 
 func Cli () {
 	cliCommands := getCliCommands()
 
 	var initLocationURL string = "https://pokeapi.co/api/v2/location-area?offset=0&limit=20"
-	cliConfig := CliConfig{
+	CliState := CliState{
 		prevLocationURL: &initLocationURL,
 		nextLocationURL: &initLocationURL,
+		pokedex: &map[string]PokedexEntry{},
+		mux: &sync.Mutex{},
 	}
 
 	cache := newCache(time.Duration(5) * time.Second)
 
 	reader := bufio.NewReader(os.Stdin)
 	scanner := bufio.NewScanner(reader)
+
+	commandHelp(&CliState, &cache, []string{})
 
 	for {
 		fmt.Print("Poke CLI> ")
@@ -142,10 +219,10 @@ func Cli () {
 
 		command, ok := cliCommands[enteredCommand]
 		if !ok {
-			fmt.Printf("'%s' is an invalid command\n", enteredCommand)
+			fmt.Printf("'%s' is an invalid command\nUse 'help' to see a list of commands\n", enteredCommand)
 			continue
 		}
 
-		command.callback(&cliConfig, &cache, enteredParameters)
+		command.callback(&CliState, &cache, enteredParameters)
 	}
 }
