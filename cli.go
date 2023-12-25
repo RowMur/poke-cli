@@ -54,6 +54,11 @@ func getCliCommands() map[string]CliCommand {
 			description: "Inspects a pokemon from the pokedex",
 			callback: commandInspect,
 		},
+		"pokedex": {
+			name: "pokedex",
+			description: "Lists Pokedex entries",
+			callback: commandPokedex,
+		},
 	}
 }
 
@@ -206,6 +211,17 @@ func commandInspect(state *CliState, cache *cacheType, commandParams []string) e
 	fmt.Printf("Types:\n")
 	for _, pokemonType := range pokemon.Types {
 		fmt.Printf(" - %s\n", pokemonType.Type.Name)
+	}
+
+	return nil
+}
+
+func commandPokedex(state *CliState, cache *cacheType, commandParams []string) error {
+	pokedex := *state.pokedex
+
+	fmt.Printf("Your Pokedex:\n")
+	for key := range pokedex {
+		fmt.Printf(" - %s\n", key)
 	}
 
 	return nil
