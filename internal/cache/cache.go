@@ -1,4 +1,4 @@
-package main
+package cache
 
 import (
 	"sync"
@@ -10,13 +10,13 @@ type cacheEntry struct {
 	value []byte
 }
 
-type cacheType struct {
+type CacheType struct {
 	entries map[string]cacheEntry
 	mux *sync.Mutex
 }
 
-func newCache(waitToClear time.Duration) cacheType {
-	cache := cacheType{
+func NewCache(waitToClear time.Duration) CacheType {
+	cache := CacheType{
 		entries: map[string]cacheEntry{},
 		mux: &sync.Mutex{},
 	}
@@ -24,14 +24,14 @@ func newCache(waitToClear time.Duration) cacheType {
 	return cache
 }
 
-func (cache *cacheType) cleanCacheLoop (waitToClear time.Duration) {
+func (cache *CacheType) cleanCacheLoop (waitToClear time.Duration) {
 	ticker := time.NewTicker(waitToClear)
 	for range ticker.C {
 		cache.cleanCache(waitToClear)
 	}
 }
 
-func (cache *cacheType) cleanCache(waitToClear time.Duration) {
+func (cache *CacheType) cleanCache(waitToClear time.Duration) {
 	cache.mux.Lock()
 	defer cache.mux.Unlock()
 	for k, v := range cache.entries {
@@ -41,7 +41,7 @@ func (cache *cacheType) cleanCache(waitToClear time.Duration) {
 	}
 }
 
-func (cache *cacheType) add(key string, value []byte) {
+func (cache *CacheType) Add(key string, value []byte) {
 	actualCache := *cache
 	actualCache.mux.Lock()
 	defer actualCache.mux.Unlock()
@@ -51,7 +51,7 @@ func (cache *cacheType) add(key string, value []byte) {
 	}
 }
 
-func (cache *cacheType) get(key string) ([]byte, bool) {
+func (cache *CacheType) Get(key string) ([]byte, bool) {
 	actualCache := *cache
 	entry, ok := actualCache.entries[key]
 	if !ok {

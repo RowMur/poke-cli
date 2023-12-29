@@ -1,4 +1,4 @@
-package main
+package pokedata
 
 import (
 	"encoding/json"
@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/RowMur/poke-cli/internal/cache"
 )
 
-func fetch(url string, cache *cacheType) ([]byte, error) {
-	cachedEntry, ok := cache.get(url)
+func fetch(url string, c *cache.CacheType) ([]byte, error) {
+	cachedEntry, ok := c.Get(url)
 	if ok {
 		return cachedEntry, nil
 	}
@@ -32,11 +34,11 @@ func fetch(url string, cache *cacheType) ([]byte, error) {
 		return []byte{}, errors.New(errorMessage)
 	}
 
-	cache.add(url, body)
+	c.Add(url, body)
 	return body, nil
 }
 
-type locationResponse struct {
+type LocationResponse struct {
 	Count    int    `json:"count"`
 	Next     string `json:"next"`
 	Previous string    `json:"previous"`
@@ -46,23 +48,23 @@ type locationResponse struct {
 	} `json:"results"`
 }
 
-func fetchLocations(url string, cache *cacheType) (locationResponse, error) {
-	body, err := fetch(url, cache)
+func FetchLocations(url string, c *cache.CacheType) (LocationResponse, error) {
+	body, err := fetch(url, c)
 	if err != nil {
-		return locationResponse{}, err
+		return LocationResponse{}, err
 	}
 
-	data := locationResponse{}
+	data := LocationResponse{}
 	err = json.Unmarshal(body, &data)
 
 	if err != nil {
-		return locationResponse{}, err
+		return LocationResponse{}, err
 	}
 
 	return data, nil
 }
 
-type locationDetailResponse struct {
+type LocationDetailResponse struct {
 	EncounterMethodRates []struct {
 		EncounterMethod struct {
 			Name string `json:"name"`
@@ -115,18 +117,18 @@ type locationDetailResponse struct {
 	} `json:"pokemon_encounters"`
 }
 
-func fetchLocationDetail(location string, cache *cacheType) (locationDetailResponse, error) {
+func FetchLocationDetail(location string, c *cache.CacheType) (LocationDetailResponse, error) {
 	url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s", location)
-	body, err := fetch(url, cache)
+	body, err := fetch(url, c)
 	if err != nil {
-		return locationDetailResponse{}, err
+		return LocationDetailResponse{}, err
 	}
 
-	data := locationDetailResponse{}
+	data := LocationDetailResponse{}
 	err = json.Unmarshal(body, &data)
 
 	if err != nil {
-		return locationDetailResponse{}, err
+		return LocationDetailResponse{}, err
 	}
 
 	return data, nil
@@ -387,9 +389,9 @@ type Pokemon struct {
 	Weight int `json:"weight"`
 }
 
-func fetchPokemon(pokemonName string, cache *cacheType) (Pokemon, error) {
+func FetchPokemon(pokemonName string, c *cache.CacheType) (Pokemon, error) {
 	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", pokemonName)
-	body, err := fetch(url, cache)
+	body, err := fetch(url, c)
 	if err != nil {
 		return Pokemon{}, err
 	}

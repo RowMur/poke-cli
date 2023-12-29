@@ -1,5 +1,7 @@
 package main
 
+import "github.com/RowMur/poke-cli/internal/cli"
+
 func main() {
-	Cli()
+	cli.Cli()
 }
