@@ -10,7 +10,7 @@ func commandPokedex(state *cliState, c *cache.CacheType, commandParams []string)
 	pokedex := state.Pokedex
 
 	fmt.Printf("Your Pokedex:\n")
-	for key := range pokedex {
+	for key := range pokedex.Entries {
 		fmt.Printf(" - %s\n", key)
 	}
 

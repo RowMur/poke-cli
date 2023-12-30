@@ -5,20 +5,18 @@ import (
 	"fmt"
 	"os"
 	"sync"
-
-	"github.com/RowMur/poke-cli/internal/pokedata"
 )
-
-type pokedexEntry struct {
-	Pokemon     pokedata.Pokemon `json:"pokemon"`
-	TimesCaught int `json:"timesCaught"`
-}
 
 type cliState struct {
 	PrevLocationURL string `json:"prevLocationURL"`
 	NextLocationURL string `json:"nextLocationURL"`
-	Pokedex         map[string]pokedexEntry `json:"pokedex"`
+	Pokedex         pokedex `json:"pokedex"`
 	Mux             *sync.Mutex `json:"-"`
+}
+
+func (cs *cliState) save() {
+	_, stateFileLocation := getFileDetails()
+	writeToFile(stateFileLocation, *cs)
 }
 
 func writeToFile(file string, state cliState) {
@@ -43,18 +41,14 @@ func getFileDetails() (fileDir, fileLocation string) {
 	return stateFileDir, stateFileLocation
 }
 
-func (cs *cliState) Update(newState cliState) {
-	_, stateFileLocation := getFileDetails()
-	cs = &newState
-	writeToFile(stateFileLocation, newState)
-}
-
 func createInitialState(dir, file string) {
 	initialLocationURL := "https://pokeapi.co/api/v2/location-area?offset=0&limit=20"
 	initialState := cliState{
 		PrevLocationURL: initialLocationURL,
 		NextLocationURL: initialLocationURL,
-		Pokedex: map[string]pokedexEntry{},
+		Pokedex: pokedex{
+			Entries: map[string]pokedexEntry{},
+		},
 		Mux: &sync.Mutex{},
 	}
 

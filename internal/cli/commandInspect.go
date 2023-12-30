@@ -10,7 +10,7 @@ func commandInspect(state *cliState, c *cache.CacheType, commandParams []string)
 	pokemonToInspect := commandParams[0]
 	pokedex := state.Pokedex
 
-	pokedexEntry, ok := pokedex[pokemonToInspect]
+	pokedexEntry, ok := pokedex.Entries[pokemonToInspect]
 	if !ok {
 		fmt.Printf("you have not caught %s yet!\n", pokemonToInspect)
 		return nil

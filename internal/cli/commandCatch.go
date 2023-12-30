@@ -29,26 +29,9 @@ func commandCatch(state *cliState, c *cache.CacheType, commandParams []string) e
 		return nil
 	}
 
-	prevPokedex := state.Pokedex
-	_, ok := prevPokedex[p.Name]
-	if !ok {
-		prevPokedex[p.Name] = pokedexEntry{
-			Pokemon:     p,
-			TimesCaught: 1,
-		}
-	} else {
-		prevTimesCaught := prevPokedex[p.Name].TimesCaught
-		prevPokedex[p.Name] = pokedexEntry{
-			Pokemon:     p,
-			TimesCaught: prevTimesCaught + 1,
-		}
-	}
+	state.Pokedex.addEntry(p)
 
-	state.Pokedex = prevPokedex
-	state.Update(*state)
-
-	pokedex := state.Pokedex
-	entry := pokedex[p.Name]
+	entry := state.Pokedex.Entries[p.Name]
 	fmt.Printf("%s was caught! Caught a total of %v times\n", entry.Pokemon.Name, entry.TimesCaught)
 	return nil
 }
