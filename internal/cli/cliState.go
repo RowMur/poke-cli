@@ -8,8 +8,7 @@ import (
 )
 
 type cliState struct {
-	PrevLocationURL string `json:"prevLocationURL"`
-	NextLocationURL string `json:"nextLocationURL"`
+	MapState mapState `json:"mapState"`
 	Pokedex         pokedex `json:"pokedex"`
 	Mux             *sync.Mutex `json:"-"`
 }
@@ -44,8 +43,10 @@ func getFileDetails() (fileDir, fileLocation string) {
 func createInitialState(dir, file string) {
 	initialLocationURL := "https://pokeapi.co/api/v2/location-area?offset=0&limit=20"
 	initialState := cliState{
-		PrevLocationURL: initialLocationURL,
-		NextLocationURL: initialLocationURL,
+		MapState: mapState{
+			PrevLocationURL: initialLocationURL,
+			NextLocationURL: initialLocationURL,
+		},
 		Pokedex: pokedex{
 			Entries: map[string]pokedexEntry{},
 		},
