@@ -8,7 +8,7 @@ import (
 
 func commandInspect(state *cliState, c *cache.CacheType, commandParams []string) error {
 	pokemonToInspect := commandParams[0]
-	pokedex := *state.pokedex
+	pokedex := state.Pokedex
 
 	pokedexEntry, ok := pokedex[pokemonToInspect]
 	if !ok {
@@ -16,7 +16,7 @@ func commandInspect(state *cliState, c *cache.CacheType, commandParams []string)
 		return nil
 	}
 
-	pokemon := pokedexEntry.pokemon
+	pokemon := pokedexEntry.Pokemon
 	fmt.Printf("Name: %s\n", pokemon.Name)
 	fmt.Printf("Height: %v\n", pokemon.Height)
 	fmt.Printf("Weight: %v\n", pokemon.Weight)

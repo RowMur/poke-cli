@@ -5,42 +5,20 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/RowMur/poke-cli/internal/cache"
-	"github.com/RowMur/poke-cli/internal/pokedata"
 )
-
-type pokedexEntry struct {
-	pokemon pokedata.Pokemon
-	timesCaught int
-}
-
-type cliState struct {
-	prevLocationURL *string
-	nextLocationURL *string
-	pokedex *map[string]pokedexEntry
-	mux *sync.Mutex
-}
 
 func Cli () {
 	cliCommands := getCliCommands()
-
-	var initLocationURL string = "https://pokeapi.co/api/v2/location-area?offset=0&limit=20"
-	CliState := cliState{
-		prevLocationURL: &initLocationURL,
-		nextLocationURL: &initLocationURL,
-		pokedex: &map[string]pokedexEntry{},
-		mux: &sync.Mutex{},
-	}
-
 	c := cache.NewCache(time.Duration(5) * time.Second)
+	cs := getCliState()
 
 	reader := bufio.NewReader(os.Stdin)
 	scanner := bufio.NewScanner(reader)
 
-	commandHelp(&CliState, &c, []string{})
+	commandHelp(&cs, &c, []string{})
 
 	for {
 		fmt.Print("Poke CLI> ")
@@ -57,6 +35,6 @@ func Cli () {
 			continue
 		}
 
-		command.callback(&CliState, &c, enteredParameters)
+		command.callback(&cs, &c, enteredParameters)
 	}
 }

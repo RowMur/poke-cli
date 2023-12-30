@@ -14,8 +14,8 @@ func genericMapCommand(url string, state *cliState, c *cache.CacheType) error {
 		return err
 	}
 
-	state.prevLocationURL = &locations.Previous
-	state.nextLocationURL = &locations.Next
+	state.PrevLocationURL = locations.Previous
+	state.NextLocationURL = locations.Next
 
 	for _, result := range locations.Results {
 		fmt.Println(result.Name)
@@ -24,9 +24,9 @@ func genericMapCommand(url string, state *cliState, c *cache.CacheType) error {
 }
 
 func commandMap(state *cliState, c *cache.CacheType, commandParams []string) error {
-	return genericMapCommand(*state.nextLocationURL, state, c)
+	return genericMapCommand(state.NextLocationURL, state, c)
 }
 
 func commandMapBack(state *cliState, c *cache.CacheType, commandParams []string) error {
-	return genericMapCommand(*state.prevLocationURL, state, c)
+	return genericMapCommand(state.PrevLocationURL, state, c)
 }

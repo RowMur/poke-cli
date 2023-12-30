@@ -29,27 +29,26 @@ func commandCatch(state *cliState, c *cache.CacheType, commandParams []string) e
 		return nil
 	}
 
-	prevPokedex := *state.pokedex
+	prevPokedex := state.Pokedex
 	_, ok := prevPokedex[p.Name]
 	if !ok {
 		prevPokedex[p.Name] = pokedexEntry{
-			pokemon:     p,
-			timesCaught: 1,
+			Pokemon:     p,
+			TimesCaught: 1,
 		}
 	} else {
-		prevTimesCaught := prevPokedex[p.Name].timesCaught
+		prevTimesCaught := prevPokedex[p.Name].TimesCaught
 		prevPokedex[p.Name] = pokedexEntry{
-			pokemon:     p,
-			timesCaught: prevTimesCaught + 1,
+			Pokemon:     p,
+			TimesCaught: prevTimesCaught + 1,
 		}
 	}
 
-	state.mux.Lock()
-	defer state.mux.Unlock()
-	state.pokedex = &prevPokedex
+	state.Pokedex = prevPokedex
+	state.Update(*state)
 
-	pokedex := *state.pokedex
+	pokedex := state.Pokedex
 	entry := pokedex[p.Name]
-	fmt.Printf("%s was caught! Caught a total of %v times\n", entry.pokemon.Name, entry.timesCaught)
+	fmt.Printf("%s was caught! Caught a total of %v times\n", entry.Pokemon.Name, entry.TimesCaught)
 	return nil
 }
