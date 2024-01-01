@@ -1,4 +1,4 @@
-package cli
+package user
 
 import (
 	"encoding/json"
@@ -7,18 +7,18 @@ import (
 	"sync"
 )
 
-type cliState struct {
-	MapState mapState `json:"mapState"`
+type CliState struct {
+	Pokemap 		pokemap `json:"pokemap"`
 	Pokedex         pokedex `json:"pokedex"`
 	Mux             *sync.Mutex `json:"-"`
 }
 
-func (cs *cliState) save() {
+func (cs *CliState) Save() {
 	_, stateFileLocation := getFileDetails()
 	writeToFile(stateFileLocation, *cs)
 }
 
-func writeToFile(file string, state cliState) {
+func writeToFile(file string, state CliState) {
 	stateData, err := json.MarshalIndent(state, "", " ")
 	if err != nil {
 		fmt.Println(err)
@@ -42,8 +42,8 @@ func getFileDetails() (fileDir, fileLocation string) {
 
 func createInitialState(dir, file string) {
 	initialLocationURL := "https://pokeapi.co/api/v2/location-area?offset=0&limit=20"
-	initialState := cliState{
-		MapState: mapState{
+	initialState := CliState{
+		Pokemap: pokemap{
 			PrevLocationURL: initialLocationURL,
 			NextLocationURL: initialLocationURL,
 		},
@@ -57,7 +57,7 @@ func createInitialState(dir, file string) {
 	writeToFile(file, initialState)	
 }
 
-func getCliState() cliState {
+func GetCliState() CliState {
 	stateFileDir, stateFileLocation := getFileDetails()
 
 	_, err := os.ReadFile(stateFileLocation)
@@ -65,7 +65,7 @@ func getCliState() cliState {
 		createInitialState(stateFileDir, stateFileLocation)
 	}
 
-	cs := cliState{}
+	cs := CliState{}
 	file, _ := os.ReadFile(stateFileLocation)
 	json.Unmarshal(file, &cs)
 	return cs

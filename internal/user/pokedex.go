@@ -1,4 +1,4 @@
-package cli
+package user
 
 import "github.com/RowMur/poke-cli/internal/pokedata"
 
@@ -11,7 +11,7 @@ type pokedex struct {
 	Entries map[string]pokedexEntry `json:"entries"`
 }
 
-func (pd *pokedex) addEntry(pokemon pokedata.Pokemon) {
+func (pd *pokedex) AddEntry(pokemon pokedata.Pokemon) {
 	entry, ok := pd.Entries[pokemon.Name]
 	if ok {
 		entry.TimesCaught += 1

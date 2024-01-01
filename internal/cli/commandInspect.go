@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	"github.com/RowMur/poke-cli/internal/cache"
+	"github.com/RowMur/poke-cli/internal/user"
 )
 
-func commandInspect(state *cliState, c *cache.CacheType, commandParams []string) error {
+func commandInspect(state *user.CliState, c *cache.CacheType, commandParams []string) error {
 	pokemonToInspect := commandParams[0]
 	pokedex := state.Pokedex
 

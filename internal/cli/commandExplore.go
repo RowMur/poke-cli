@@ -5,9 +5,10 @@ import (
 
 	"github.com/RowMur/poke-cli/internal/cache"
 	"github.com/RowMur/poke-cli/internal/pokedata"
+	"github.com/RowMur/poke-cli/internal/user"
 )
 
-func commandExplore(state *cliState, c *cache.CacheType, commandParams []string) error {
+func commandExplore(state *user.CliState, c *cache.CacheType, commandParams []string) error {
 	areaName := commandParams[0]
 	fmt.Printf("Exploring %s\n", areaName)
 

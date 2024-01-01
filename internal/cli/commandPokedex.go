@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	"github.com/RowMur/poke-cli/internal/cache"
+	"github.com/RowMur/poke-cli/internal/user"
 )
 
-func commandPokedex(state *cliState, c *cache.CacheType, commandParams []string) error {
+func commandPokedex(state *user.CliState, c *cache.CacheType, commandParams []string) error {
 	pokedex := state.Pokedex
 
 	fmt.Printf("Your Pokedex:\n")

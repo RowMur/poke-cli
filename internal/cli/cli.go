@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/RowMur/poke-cli/internal/cache"
+	"github.com/RowMur/poke-cli/internal/user"
 )
 
 func Cli () {
 	cliCommands := getCliCommands()
 	c := cache.NewCache(time.Duration(5) * time.Second)
-	cs := getCliState()
+	cs := user.GetCliState()
 
 	reader := bufio.NewReader(os.Stdin)
 	scanner := bufio.NewScanner(reader)

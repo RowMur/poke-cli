@@ -1,11 +1,14 @@
 package cli
 
-import "github.com/RowMur/poke-cli/internal/cache"
+import (
+	"github.com/RowMur/poke-cli/internal/cache"
+	"github.com/RowMur/poke-cli/internal/user"
+)
 
 type CliCommand struct {
 	name        string
 	description string
-	callback    func(*cliState, *cache.CacheType, []string) error
+	callback    func(*user.CliState, *cache.CacheType, []string) error
 }
 
 func getCliCommands() map[string]CliCommand {

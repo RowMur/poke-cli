@@ -6,9 +6,10 @@ import (
 
 	"github.com/RowMur/poke-cli/internal/cache"
 	"github.com/RowMur/poke-cli/internal/pokedata"
+	"github.com/RowMur/poke-cli/internal/user"
 )
 
-func commandCatch(state *cliState, c *cache.CacheType, commandParams []string) error {
+func commandCatch(state *user.CliState, c *cache.CacheType, commandParams []string) error {
 	pokemonToCatchName := commandParams[0]
 	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonToCatchName)
 
@@ -29,7 +30,7 @@ func commandCatch(state *cliState, c *cache.CacheType, commandParams []string) e
 		return nil
 	}
 
-	state.Pokedex.addEntry(p)
+	state.Pokedex.AddEntry(p)
 
 	entry := state.Pokedex.Entries[p.Name]
 	fmt.Printf("%s was caught! Caught a total of %v times\n", entry.Pokemon.Name, entry.TimesCaught)

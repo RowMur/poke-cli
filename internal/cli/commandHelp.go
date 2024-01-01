@@ -5,9 +5,10 @@ import (
 	"sort"
 
 	"github.com/RowMur/poke-cli/internal/cache"
+	"github.com/RowMur/poke-cli/internal/user"
 )
 
-func commandHelp(state *cliState, c *cache.CacheType, commandParams []string) error {
+func commandHelp(state *user.CliState, c *cache.CacheType, commandParams []string) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Poke CLI!")
 	fmt.Println("Usage:")
